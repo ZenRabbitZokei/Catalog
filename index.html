@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<meta name="robots" content="noindex, nofollow">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title></title>
@@ -39,9 +40,45 @@
     border-radius: 12px;
   }
   body.noscroll { overflow: hidden; }
+
+  /* Full page center alignment */
+  #gate {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;              /* full screen height */
+    background: #f6f7f9;        /* soft background */
+  }
+
+  #enter {
+    padding: 18px 50px;         /* larger button */
+    font-size: 22px;            /* bigger text */
+    border: none;
+    border-radius: 12px;
+    background: #ff8a00;        /* your catalog orange */
+    color: black;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  #enter:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
 </style>
 </head>
 <body>
+<div id="gate" style="text-align:center;margin-top:60px;">
+  <button id="enter">Zen Rabbit Zokei</button>
+</div>
+<script>
+  document.getElementById('enter').onclick = function() {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('real-content').style.display = 'block';
+  }
+</script>
+<div id="real-content" style="display:none;">
 <header>
   <div class="wrap">
     <div class="title">Zen Rabbit Zokei</div>
@@ -6801,6 +6838,7 @@
 <div id="lightbox" class="lightbox" aria-hidden="true">
   <img id="lightbox-img" alt="">
 </div>
+</div> <!-- content -->
 </main>
 <script>
   (function () {
