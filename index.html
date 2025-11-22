@@ -66,6 +66,37 @@
     transform: scale(1.05);
     box-shadow: 0 6px 20px rgba(0,0,0,0.2);
   }
+  .subline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
+  /* keep the hint left-aligned */
+  .hint {
+    color: #444;
+  }
+
+  /* NSFW toggle aligned to the right, neat label */
+  .nsfw-toggle {
+    margin-left: auto;              /* push it to the right */
+    white-space: nowrap;
+  }
+
+  .nsfw-toggle label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .nsfw-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+  }
 </style>
 </head>
 <body>
@@ -79,13 +110,29 @@
   }
 </script>
 <div id="real-content" style="display:none;">
-<header>
-  <div class="wrap">
-    <div class="title">Zen Rabbit Zokei</div>
-    <input id="filter" placeholder="Type to filter by original model name…" autocomplete="off" />
-    <div class="hint">Search matches the character.</div>
-  </div>
-</header>
+  <header>
+    <div class="wrap">
+      <div class="title">Zen Rabbit Zokei</div>
+
+      <input id="filter"
+             placeholder="Type to filter by original model name…"
+             autocomplete="off" />
+
+      <!-- NEW: hint + NSFW toggle on the same row -->
+      <div class="subline">
+        <div class="hint">
+          Search matches the character.
+        </div>
+
+        <div class="nsfw-toggle">
+          <label for="toggle-nsfw">
+            <input type="checkbox" id="toggle-nsfw">
+            <span>Include 18+ / mature models</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </header>
 <main>
   <div class="wrap">
     <div class="count" id="count"></div>
@@ -558,6 +605,16 @@
             <!-- <div class="code">13266F</div> -->
           </div>
           <div class="model" title="Elf Princess">Elf Princess</div>
+        </div>
+      </div>
+      <div class="card" data-name="Chibi Paper Mario">
+        <img class="thumb" loading="lazy" src="1355D4.png" alt="Chibi Paper Mario" data-full="1355D4.png">
+        <div class="meta">
+          <div class="line">
+            <!-- <div class="left">NomNom</div> -->
+            <!-- <div class="code">1355D4</div> -->
+          </div>
+          <div class="model" title="Chibi Paper Mario">Chibi Paper Mario</div>
         </div>
       </div>
       <div class="card" data-name="Chibi Ghost Pokemon Diorama">
@@ -3830,6 +3887,16 @@
           <div class="model" title="Gawr Gura Christmas (Hololive)">Gawr Gura Christmas (Hololive)</div>
         </div>
       </div>
+      <div class="card" data-name="Chibi Sailor Moon">
+        <img class="thumb" loading="lazy" src="90A9C7.jpg" alt="Chibi Sailor Moon" data-full="90A9C7.jpg">
+        <div class="meta">
+          <div class="line">
+            <!-- <div class="left">NomNom</div> -->
+            <!-- <div class="code">90A9C7</div> -->
+          </div>
+          <div class="model" title="Chibi Sailor Moon">Chibi Sailor Moon</div>
+        </div>
+      </div>
       <div class="card" data-name="Cha Hae In (Solo Leveling)">
         <img class="thumb" loading="lazy" src="90C741.jpg" alt="Cha Hae In (Solo Leveling)" data-full="90C741.jpg">
         <div class="meta">
@@ -5098,6 +5165,16 @@
             <!-- <div class="code">C1D3DD</div> -->
           </div>
           <div class="model" title="Gamora">Gamora</div>
+        </div>
+      </div>
+      <div class="card" data-name="Jiji - Dandadan">
+        <img class="thumb" loading="lazy" src="C20C21.jpg" alt="Jiji - Dandadan" data-full="C20C21.jpg">
+        <div class="meta">
+          <div class="line">
+            <!-- <div class="left">NomNom</div> -->
+            <!-- <div class="code">C20C21</div> -->
+          </div>
+          <div class="model" title="Jiji - Dandadan">Jiji - Dandadan</div>
         </div>
       </div>
       <div class="card" data-name="Juggernaut">
@@ -6851,59 +6928,77 @@
 </div> <!-- content -->
 </main>
 <script>
-  (function () {
-    const input = document.getElementById('filter');
-    const grid = document.getElementById('grid');
-    const cards = Array.from(grid.getElementsByClassName('card'));
-    const count = document.getElementById('count');
+(function () {
+  const input = document.getElementById('filter');
+  const grid = document.getElementById('grid');
+  const cards = Array.from(grid.getElementsByClassName('card'));
+  const count = document.getElementById('count');
+  const nsfwToggle = document.getElementById('toggle-nsfw');
 
-    function norm(s){ return (s||'').toLowerCase().normalize('NFKD'); }
+  function norm(s) {
+    return (s || '').toLowerCase().normalize('NFKD');
+  }
 
-    function apply() {
-      const q = norm(input.value.trim());
-      let visible = 0;
-      for (const c of cards) {
-        const name = norm(c.getAttribute('data-name'));
-        const ok = !q || name.includes(q);
-        c.classList.toggle('hide', !ok);
-        if (ok) visible++;
-      }
-      count.textContent = (q ? `Showing ${visible} of ${cards.length}` : `Total items: ${cards.length}`);
+  function isNSFW(card) {
+    const bits = [];
+
+    // 1) The visible title text
+    const modelEl = card.querySelector('.model');
+    if (modelEl && modelEl.textContent) bits.push(modelEl.textContent);
+
+    // 2) data-name attribute (you already use it for search)
+    const dataName = card.getAttribute('data-name');
+    if (dataName) bits.push(dataName);
+
+    // 3) image alt/title (sometimes people put tags there)
+    const imgEl = card.querySelector('img.thumb');
+    if (imgEl) {
+      if (imgEl.alt) bits.push(imgEl.alt);
+      const imgTitle = imgEl.getAttribute('title');
+      if (imgTitle) bits.push(imgTitle);
     }
 
-    input.addEventListener('input', apply);
-    apply();
-  })();
+    // Normalised combined text
+    const all = norm(bits.join(' '));
 
-  const lightbox = document.getElementById('lightbox');
-  const lightboxImg = document.getElementById('lightbox-img');
-  const grid = document.getElementById('grid');
-
-  function openLightbox(src, alt) {
-    lightboxImg.src = src;
-    lightboxImg.alt = alt || '';
-    lightbox.classList.add('open');
-    document.body.classList.add('noscroll');
+    // Accept both spellings + bare "nsfw" + other typical markers
+    return (
+      all.includes('nfsw') || all.includes('nsfw')
+    );
   }
 
-  function closeLightbox() {
-    lightbox.classList.remove('open');
-    lightboxImg.src = '';
-    document.body.classList.remove('noscroll');
+  function apply() {
+    const q = norm(input.value.trim());
+    const showNSFW = nsfwToggle && nsfwToggle.checked;
+    let visible = 0;
+
+    for (const c of cards) {
+      const name = norm(c.getAttribute('data-name') || '');
+      const cardIsNSFW = isNSFW(c);
+
+      const matchesSearch = !q || name.includes(q);
+      const matchesNSFW = showNSFW || !cardIsNSFW;
+
+      const ok = matchesSearch && matchesNSFW;
+
+      c.classList.toggle('hide', !ok);
+      if (ok) visible++;
+    }
+
+    if (!cards.length) {
+      count.textContent = 'No items loaded.';
+    } else if (q || showNSFW) {
+      count.textContent = `Showing ${visible} of ${cards.length}`;
+    } else {
+      count.textContent = `Showing ${visible} safe models (NSFW hidden)`;
+    }
   }
 
-  grid.addEventListener('click', (e) => {
-    const img = e.target.closest('img.thumb');
-    if (!img) return;
-    const full = img.getAttribute('data-full') || img.src;
-    openLightbox(full, img.alt);
-  });
+  input.addEventListener('input', apply);
+  if (nsfwToggle) nsfwToggle.addEventListener('change', apply);
 
-  lightbox.addEventListener('click', closeLightbox);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeLightbox();
-  });
-
+  apply();
+})();
 </script>
 </body>
 </html>
